@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StaticArithmeticLibrary", "StaticArithmeticLibrary\StaticArithmeticLibrary.vcxproj", "{6FB95764-C998-44A4-A1EF-2D9AD14B37F5}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StaticLinkingClient", "StaticLinkingClient\StaticLinkingClient.vcxproj", "{8FBC8066-C3F9-456E-A57A-49B7210BA836}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6FB95764-C998-44A4-A1EF-2D9AD14B37F5} = {6FB95764-C998-44A4-A1EF-2D9AD14B37F5}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
