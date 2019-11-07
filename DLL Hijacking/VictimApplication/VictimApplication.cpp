@@ -1,61 +1,42 @@
 #include <Windows.h>
-#include <wincrypt.h>
 #include <iostream>
+#include <fstream>
 #include <string>
+#include <sstream>
+#include <iomanip>
+
+using namespace std;
+
 #include "..\Arithmatic\Arithmatic.h"
+#include "openssl\include\openssl\sha.h"
+
 #pragma comment(lib, "../Release/Arithmatic.lib")
 
-#define BUFSIZE 1024
-#define MD5LEN 32
-#define HASH "AD5CAD32FDB39499110A57E32667AAD4"
+#define SHA256 "651618d94d75571f8abd2a480c6368e124a0542a2bc0e6a10be7ca6e455570e9"
 
 BOOL Authenticate()
 {
-	DWORD dwStatus = 0;
-	BOOL bResult = FALSE;
-	HCRYPTPROV hProv = 0;
-	HCRYPTHASH hHash = 0;
-	HANDLE hFile = NULL;
-	BYTE rgbFile[BUFSIZE];
-	DWORD cbRead = 0;
-	BYTE rgbHash[MD5LEN];
-	DWORD cbHash = 0;
-	CHAR rgbDigits[] = "0123456789abcdefghijklmnopqrstuv";
-	LPCWSTR fileName = L"Arithmatic.dll";
+	ifstream istream("Arithmatic.dll", std::ios::in | std::ios::binary);
+	
+	std::string content = std::string((std::istreambuf_iterator<char>(istream)), (std::istreambuf_iterator<char>()));
+	istream.close();
+	
+	unsigned char digest[SHA256_DIGEST_LENGTH];
+	SHA256_CTX ctx;
+	SHA256_Init(&ctx);
+	SHA256_Update(&ctx, content.c_str(), content.size());
+	SHA256_Final(digest, &ctx);
 
-	hFile = CreateFile(fileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-	if (INVALID_HANDLE_VALUE != hFile)
+	stringstream ss;
+	for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
 	{
-		if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
-		{
-			if (CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash))
-			{
-				while (bResult = ReadFile(hFile, rgbFile, BUFSIZE, &cbRead, NULL))
-				{
-					if (0 == cbRead)
-						break;
-					if (!CryptHashData(hHash, rgbFile, cbRead, 0))
-					{
-						std::cout << std::endl << "HashData failed";
-						return FALSE;
-					}
-				}
-				cbHash = MD5LEN;
-				if (CryptGetHashParam(hHash, HP_HASHVAL, rgbHash, &cbHash, 0))
-				{
-					std::cout << std::endl;
-					for (DWORD i = 0; i < cbHash; i++)
-					{
-						printf("%c%c", rgbDigits[rgbHash[i] >> 4], rgbDigits[rgbHash[i & 0x1f]] );
-					}
-
-				}
-				CryptDestroyHash(hHash);
-			}
-			CryptReleaseContext(hProv, 0);	
-		}
-		CloseHandle(hFile);
+		ss << hex << setw(2) << setfill('0') << (int)digest[i];
 	}
+
+
+	if (std::string(ss.str()) == SHA256)
+		return TRUE;
+
 	return FALSE;
 }
 
@@ -64,8 +45,10 @@ int main()
 {
 
 	if (!Authenticate())
+	{
+		cout << endl << "Malicious DLL found, load dll fail.";
 		return 0;
-
+	}
 	int a = 10;
 	int b = 20;
 	std::cout << std::endl << "maximum(" << a << ", " << b << ") = " << maximum(a, b);
